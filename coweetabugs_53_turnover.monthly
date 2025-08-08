@@ -1,0 +1,39 @@
+model { 
+
+    for(i in 1:nspp){ #  species, 67
+      for(j in 1:nmonths){# months, 12
+        for (k in 1:nyears){ #years,14
+          N[i,j,k] ~ dnorm(nmu[i,j,k],prec)  #count, spp i, year k; each site treated as a rep for each species
+          log(nmu[i,k]) <- logabun[i,k]  #log abundance spp i, year k
+          
+      }}}
+        
+   for(i in 1:nspp){
+    for (k in 1:nyears){
+   logabun[i,k] ~ dunif(-7,12)  #prior on log mean abundance
+   expabun[i,k]<-exp(logabun[i,k])  ## estimated abundance
+   
+    }}
+   
+   for (k in 1:nyears){
+   ttl_expected[k]<-sum(expabun[,k])  ### total for all species together, each year
+   }
+   
+   ## calculate D1, community composition turnover
+   for(i in 1:nspp){
+   for (k in 1:nyears){
+   p.abun[i,k]<-expabun[i,k]/ttl_expected[k]
+   }}
+   for(i in 1:nspp){
+   for (k in 2:nyears){
+   d1[i,k]<-log(p.abun[i,1]/p.abun[i,k])*p.abun[i,1]  ### first year is reference
+   }}
+   for (k in 2:nyears){
+   D2[k]<-log(ttl_expected[k]/ttl_expected[1]) ### first year is reference
+   D1[k]<--sum(d1[,k])
+   D[k]<-D1[k]+D2[k]
+   }
+   prec <- 1/(sigma^2)
+      sigma ~ dunif(0,6) 
+  }  
+  
